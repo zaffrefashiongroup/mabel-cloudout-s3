@@ -1,6 +1,5 @@
-## =============================================================================
-#  README - Using Terraform to Provision CloudOut to AWS Resources             #
-## =============================================================================
+# README - Using Terraform to Provision CloudOut to AWS Resources
+================================================================================
 # CloudOut to AWS S3
 Terraform code sample for CloudOut resource configuration
 _Use at your own risk._
