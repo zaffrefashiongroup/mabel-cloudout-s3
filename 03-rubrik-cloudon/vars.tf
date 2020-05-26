@@ -17,6 +17,14 @@ variable "password" {
 }
 
 ## =============================================================================
+#  Variables - Rubrik Configuration                                            #
+## =============================================================================
+variable "rubrik_archive_name" {
+    type        = string
+    description = "Name of Rubrik cluster archive location"
+}
+
+## =============================================================================
 #  Variables - AWS Authentication                                              #
 ## =============================================================================
 variable "aws_access_key" {
