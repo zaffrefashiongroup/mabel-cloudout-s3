@@ -264,6 +264,15 @@ resource "aws_s3_bucket" "mabel-log-use1-c" {
 EOF
 }
 
+# Provides additional layers of security to block all public access to the bucket
+resource "aws_s3_bucket_public_access_block" "mabel-log-use1-c" {
+  bucket                  = aws_s3_bucket.mabel-log-use1-c.id
+  block_public_acls       = true
+  block_public_policy     = true
+  ignore_public_acls      = true
+  restrict_public_buckets = true
+}
+  
 # Create bucket for archive
 resource "aws_s3_bucket" "mabel-s3-use1-c" {
   bucket = "mabel-s3-use1-c"
