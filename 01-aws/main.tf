@@ -219,6 +219,13 @@ resource "aws_kms_alias" "mabel-kms-alias" {
 ## =============================================================================
 #  Create S3 bucket for archive and specify encryption key                     #
 ## =============================================================================
+# Create bucket for logging
+resource "aws_s3_bucket" "mabel-log-use1-c" {
+  bucket = "mabel-log-use1-c"
+  acl    = "log-delivery-write"
+}
+
+# Create bucket for archive
 resource "aws_s3_bucket" "mabel-s3-use1-c" {
   bucket = "mabel-s3-use1-c"
   acl    = "private"
@@ -234,6 +241,11 @@ resource "aws_s3_bucket" "mabel-s3-use1-c" {
     use-case    = "rubrik-archive"
   }
 
+  logging {
+    target_bucket = "${aws_s3_bucket.mabel-log-use1-c.id}"
+    target_prefix = "log/"
+  }
+  
   server_side_encryption_configuration {
     rule {
       apply_server_side_encryption_by_default {
@@ -251,6 +263,26 @@ resource "aws_s3_bucket_public_access_block" "mabel-s3-use1-c" {
   block_public_policy     = true
   ignore_public_acls      = true
   restrict_public_buckets = true
+}
+
+## =============================================================================
+#  Use CloudTrail to log S3 bucket events                                      #
+## =============================================================================
+data "aws_s3_bucket" "mabel-s3-use1-c" {
+  bucket = "mabel-s3-use1-c"
+}
+
+resource "aws_cloudtrail" "mabel-cloud-trail-use1-c" {
+  
+  event_selector {
+    read_write_type           = "All"
+    include_management_events = true
+
+    data_resource {
+      type = "AWS::S3::Object"
+      values = ["${data.aws_s3_bucket.mabel-s3-use1-c.arn}/"]
+    }
+  }
 }
 
 ## =============================================================================
