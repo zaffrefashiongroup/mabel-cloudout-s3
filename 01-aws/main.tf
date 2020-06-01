@@ -219,6 +219,61 @@ resource "aws_kms_alias" "mabel-kms-alias" {
 ## =============================================================================
 #  Create S3 bucket for archive and specify encryption key                     #
 ## =============================================================================
+# Create bucket for logging
+resource "aws_s3_bucket" "mabel-log-use1-c" {
+  bucket = "mabel-log-use1-c"
+  acl    = "log-delivery-write"
+
+  tags = {
+    Name        = "mabel-log-use1-c"
+    environment = var.aws_environment_name
+    managed-by  = "Terraform"
+    rubrik-cdm  = var.aws_rubrik_cdm
+    use-case    = "rubrik-archive-cloudtrail"
+  }
+
+  policy = <<EOF
+{
+    "Version": "2012-10-17",
+    "Statement": [
+        {
+            "Sid": "AWSCloudTrailAclCheck",
+            "Effect": "Allow",
+            "Principal": {
+              "Service": "cloudtrail.amazonaws.com"
+            },
+            "Action": "s3:GetBucketAcl",
+            "Resource": "arn:aws:s3:::mabel-log-use1-c"
+        },
+        {
+            "Sid": "AWSCloudTrailWrite",
+            "Effect": "Allow",
+            "Principal": {
+              "Service": "cloudtrail.amazonaws.com"
+            },
+            "Action": "s3:PutObject",
+            "Resource": "arn:aws:s3:::mabel-log-use1-c/prefix/AWSLogs/${data.aws_caller_identity.current.account_id}/*",
+            "Condition": {
+                "StringEquals": {
+                    "s3:x-amz-acl": "bucket-owner-full-control"
+                }
+            }
+        }
+    ]
+}
+EOF
+}
+
+# Provides additional layers of security to block all public access to the bucket
+resource "aws_s3_bucket_public_access_block" "mabel-log-use1-c" {
+  bucket                  = aws_s3_bucket.mabel-log-use1-c.id
+  block_public_acls       = true
+  block_public_policy     = true
+  ignore_public_acls      = true
+  restrict_public_buckets = true
+}
+  
+# Create bucket for archive
 resource "aws_s3_bucket" "mabel-s3-use1-c" {
   bucket = "mabel-s3-use1-c"
   acl    = "private"
@@ -234,6 +289,11 @@ resource "aws_s3_bucket" "mabel-s3-use1-c" {
     use-case    = "rubrik-archive"
   }
 
+  logging {
+    target_bucket = aws_s3_bucket.mabel-log-use1-c.id
+    target_prefix = "log/"
+  }
+  
   server_side_encryption_configuration {
     rule {
       apply_server_side_encryption_by_default {
@@ -251,6 +311,30 @@ resource "aws_s3_bucket_public_access_block" "mabel-s3-use1-c" {
   block_public_policy     = true
   ignore_public_acls      = true
   restrict_public_buckets = true
+}
+
+## =============================================================================
+#  Use CloudTrail to log S3 bucket events                                      #
+## =============================================================================
+data "aws_s3_bucket" "mabel-s3-use1-c" {
+  bucket = aws_s3_bucket.mabel-s3-use1-c.id
+}
+
+resource "aws_cloudtrail" "mabel-cloudtrail-use1-c" {
+  name                          = "mabel-cloudtrail-use1-c"
+  s3_bucket_name                = aws_s3_bucket.mabel-log-use1-c.id
+  s3_key_prefix                 = "prefix"
+  include_global_service_events = false
+
+  event_selector {
+    read_write_type           = "All"
+    include_management_events = true
+
+  data_resource {
+    type = "AWS::S3::Object"
+    values = ["${data.aws_s3_bucket.mabel-s3-use1-c.arn}/"]
+    }
+  }
 }
 
 ## =============================================================================
