@@ -278,7 +278,7 @@ resource "aws_s3_bucket" "mabel-s3-use1-c" {
   bucket = "mabel-s3-use1-c"
   acl    = "private"
   versioning {
-    enabled = true
+    enabled = false
   }
 
   tags = {
