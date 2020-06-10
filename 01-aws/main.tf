@@ -27,27 +27,32 @@ resource "aws_iam_policy" "mabel-cloud-out" {
             "Sid": "RubrikCloudOutS3All",
             "Effect": "Allow",
             "Action": [
+                "s3:CreateBucket",
                 "s3:ListAllMyBuckets"
             ],
-            "Resource": "*"
+            "Resource": "arn:aws:s3:::*"
         },
         {
-            "Sid": "RubrikCloudOutS3Restricted",
+            "Sid": "RubrikCloudOutS3Bucket",
             "Effect": "Allow",
             "Action": [
-                "s3:CreateBucket",
-                "s3:DeleteBucket",
-                "s3:DeleteObject",
-                "s3:GetBucketLocation",
-                "s3:GetObject",
                 "s3:ListBucket",
-                "s3:ListAllMyBuckets",
+                "s3:GetBucketLocation"
+            ],
+            "Resource": "arn:aws:s3:::mabel-s3-use1-c"
+        },
+        {
+            "Sid": "RubrikCloudOutS3BucketObjects",
+            "Effect": "Allow",
+            "Action": [
+                "s3:GetObject",
                 "s3:PutObject",
+                "s3:DeleteObject",
                 "s3:AbortMultipartUpload",
                 "s3:ListMultipartUploadParts",
                 "s3:RestoreObject"
             ],
-            "Resource": "*"
+            "Resource": "arn:aws:s3:::mabel-s3-use1-c/*"
         }
     ]
 }
