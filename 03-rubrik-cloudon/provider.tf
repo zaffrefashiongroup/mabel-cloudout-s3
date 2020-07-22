@@ -1,5 +1,5 @@
 ## =============================================================================
-#  Configure the Rubrik Provider                                                  #
+#  Configure the Rubrik Provider                                               #
 ## =============================================================================
 provider "rubrik" {
   node_ip     = var.node_ip
